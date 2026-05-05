@@ -18,12 +18,18 @@ export const PolyDie: React.FC<PolyDieProps> = ({
 
   if (sides === 100) {
     const tens = (value % 10) * 10;
-
-    displayValue = tens === 0 ? '00' : tens.toString();
+    displayValue = tens === 0 ? "00" : tens.toString();
   }
-  
+
+  let statusClass = "";
+  if (sides === 20 && !isRolling) {
+    if (value === 20) statusClass = "crit-success";
+    if (value === 1) statusClass = "crit-fail";
+  }
   return (
-    <div className={`die-base shape-d${sides} ${isRolling ? "rolling" : ""}`}>
+    <div
+      className={`die-base shape-d${sides} ${isRolling ? "rolling" : ""} ${statusClass}`}
+    >
       <span>{displayValue}</span>
     </div>
   );
