@@ -1,9 +1,7 @@
 import type React from "react";
 import { useRef, useState } from "react";
 import "./DiceRoller.css";
-import { DieD4 } from "./DieD4";
-import { Die } from "./Die";
-import { DieD8 } from "./DieD8";
+import { PolyDie } from "./PolyDie";
 
 type DieType = 4 | 6 | 8 | 10 | 12 | 20 | 100;
 
@@ -46,23 +44,6 @@ export const DiceRoller: React.FC = () => {
     setValue(sides);
   };
 
-  const renderActiveDie = () => {
-    switch (activeSides) {
-      case 4:
-        return <DieD4 value={value} isRolling={isRolling} />;
-      case 6:
-        return <Die value={value} isRolling={isRolling} />;
-      case 8:
-        return <DieD8 value={value} isRolling={isRolling} />;
-      default:
-        return (
-          <div className={`default-dice ${isRolling ? "rolling" : ""}`}>
-            {value}
-          </div>
-        );
-    }
-  };
-
   return (
     <div className="dice-roller">
       <div className="dice-btn">
@@ -71,17 +52,25 @@ export const DiceRoller: React.FC = () => {
             key={sides}
             onClick={() => handleDieChange(sides)}
             disabled={isRolling}
-            className={`die-btn ${isRolling ? 'rolling' : ''} ${activeSides === sides ? 'selected' : ''}`}
+            className={`die-btn ${isRolling ? "rolling" : ""} ${activeSides === sides ? "selected" : ""}`}
           >
             d{sides}
           </button>
         ))}
       </div>
 
-      <div className="active-die">{renderActiveDie()}</div>
+      <div className="active-die">
+        <PolyDie sides={activeSides} value={value} isRolling={isRolling} />
+      </div>
 
-      <button onClick={rollDice} disabled={isRolling} className={`roll-btn ${isRolling ? 'rolling' : ''}`}>
-        {isRolling ? "Rolling..." : `Roll d${activeSides}`}
+      <button
+        onClick={rollDice}
+        disabled={isRolling}
+        className={`roll-btn ${isRolling ? "rolling" : ""}`}
+      >
+        {isRolling
+          ? "Rolling..."
+          : `Roll d${activeSides === 100 ? "%" : activeSides}`}
       </button>
     </div>
   );
