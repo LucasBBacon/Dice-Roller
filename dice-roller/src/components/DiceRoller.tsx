@@ -9,31 +9,35 @@ const DICE_SET: DieType[] = [4, 6, 8, 10, 12, 20, 100];
 
 export const DiceRoller: React.FC = () => {
   const [activeSides, setActiveSides] = useState<DieType>(20);
-  const [value, setValue] = useState<number>(1);
+  const [diceCount, setDiceCount] = useState<number>(1);
+  const [values, setValues] = useState<number[]>([20]);
   const [isRolling, setIsRolling] = useState<boolean>(false);
 
   // Use a ref to store the interval ID, easier to clear it later
   const rollInterval = useRef<number | null>(null);
 
+  const generateRolls = (count: number, sides: number) => {
+    return Array.from(
+      { length: count },
+      () => Math.floor(Math.random() * sides) + 1,
+    );
+  };
+
   const rollDice = () => {
     // Prevent clicking while already rolling
     if (isRolling) return;
-
     setIsRolling(true);
 
     // Start cycling numbers based on the currently active dice
     rollInterval.current = window.setInterval(() => {
-      setValue(Math.floor(Math.random() * activeSides) + 1);
+      setValues(generateRolls(diceCount, activeSides));
     }, 80); // Change face every 80ms
 
     // Stop the interval after 1 second and set the final result
     setTimeout(() => {
-      if (rollInterval.current) {
-        clearInterval(rollInterval.current);
-      }
-
+      if (rollInterval.current) clearInterval(rollInterval.current);
       // final, official roll
-      setValue(Math.floor(Math.random() * activeSides) + 1);
+      setValues(generateRolls(diceCount, activeSides));
       setIsRolling(false);
     }, 1000);
   };
@@ -41,8 +45,18 @@ export const DiceRoller: React.FC = () => {
   const handleDieChange = (sides: DieType) => {
     if (isRolling) return;
     setActiveSides(sides);
-    setValue(sides);
+    setValues(Array(diceCount).fill(sides));
   };
+
+  const handleCountChange = (amount: number) => {
+    if (isRolling) return;
+    const newCount = Math.max(1, Math.min(10, diceCount + amount));
+    setDiceCount(newCount);
+    setValues(Array(newCount).fill(activeSides));
+  };
+
+  const totalSum = values.reduce((sum, val) => sum + val, 0);
+  const dieLabel = activeSides === 100 ? "%" : activeSides;
 
   return (
     <div className="dice-roller">
@@ -54,24 +68,60 @@ export const DiceRoller: React.FC = () => {
             disabled={isRolling}
             className={`die-btn ${isRolling ? "rolling" : ""} ${activeSides === sides ? "selected" : ""}`}
           >
-            d{sides}
+            d{sides === 100 ? "%" : sides}
           </button>
         ))}
       </div>
 
-      <div className="active-die">
-        <PolyDie sides={activeSides} value={value} isRolling={isRolling} />
+      {/* Dice Quantity Selector */}
+      <div className="quantity-selector">
+        <span className="quantity-label">Quantity:</span>
+        <button
+          onClick={() => handleCountChange(-1)}
+          disabled={isRolling || diceCount <= 1}
+          className="quantity-btn"
+        >
+          -
+        </button>
+        <span className="quantity-value">{diceCount}</span>
+        <button
+          onClick={() => handleCountChange(1)}
+          disabled={isRolling || diceCount >= 10}
+          className="quantity-btn"
+        >
+          +
+        </button>
       </div>
 
-      <button
+      {/* Interactive dice tray */}
+      <div
+        className={`dice-tray ${isRolling ? "disabled" : ""}`}
         onClick={rollDice}
-        disabled={isRolling}
-        className={`roll-btn ${isRolling ? "rolling" : ""}`}
       >
-        {isRolling
-          ? "Rolling..."
-          : `Roll d${activeSides === 100 ? "%" : activeSides}`}
-      </button>
+        {/* on hover overlay */}
+        {!isRolling && (
+          <div className="dice-tray-overlay">
+            Roll {diceCount}d{dieLabel}
+          </div>
+        )}
+
+        {/* Mapped dice */}
+        {values.map((val, index) => (
+          <PolyDie
+            key={index}
+            sides={activeSides}
+            value={val}
+            isRolling={isRolling}
+          />
+        ))}
+      </div>
+
+      {/* Total */}
+      {!isRolling && (
+        <h2 className="total-label">
+          Total: <span className="total-value">{totalSum}</span>
+        </h2>
+      )}
     </div>
   );
 };
